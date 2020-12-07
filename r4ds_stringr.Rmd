@@ -1,0 +1,257 @@
+---
+title: "Regular Expression"
+author: "Earl Macalam"
+date: "12/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Libs**
+```{r message=FALSE, warning=FALSE}
+library(stringr)
+library(tidyverse)
+```
+
+### Exercise 1
+
+1. In code that doesn’t use stringr, you’ll often see paste() and paste0(). What’s the difference between the two functions? What stringr function are they equivalent to? How do the functions differ in their handling of NA?
+
+paste() prints with space while paste0() prints without space.
+```{r}
+paste("me", "mo")
+paste0("me", "mo")
+```
+
+str_c() is quite similar to paste0() since it also prints without space. Also, interms of missing values handling, paste treat NA as character while str_c() propagates missing values in computations.
+```{r}
+str_c("me", NA)
+paste("me", NA)
+paste0("me", NA)
+```
+
+
+2. In your own words, describe the difference between the sep and collapse arguments to str_c().
+```{r}
+str_c("x", "y", sep = "/")
+str_c(c("x", "y"), collapse = "/")
+```
+
+collapse is vectorize while sep is not.
+
+3. Use str_length() and str_sub() to extract the middle character from a string. What will you do if the string has an even number of characters?
+```{r}
+x <- c("a", "abc", "abcd", "abcde", "abcdef")
+L <- str_length(x)
+m <- ceiling(L / 2)
+str_sub(x, m, m)
+```
+
+4. What does str_wrap() do? When might you want to use it?
+
+The function str_wrap() wraps text so that it fits within a certain width. This is useful for wrapping long strings of text to be typeset.
+
+5. What does str_trim() do? What’s the opposite of str_trim()?
+
+str_trim() trim white spaces from a string
+```{r}
+str_trim(" abc ")
+str_trim(" abc ", side = "left")
+str_trim(" abc ", side = "right")
+
+```
+
+The opposite of str_trim() is str_pad() which adds characters to each side.
+```{r}
+str_pad("abc", 5, side = "both")
+str_pad("abc", 4, side = "right")
+str_pad("abc", 4, side = "left")
+```
+
+6. Write a function that turns (e.g.) a vector c("a", "b", "c") into the string a, b, and c. Think carefully about what it should do if given a vector of length 0, 1, or 2.
+```{r}
+convertMe <- function(x) {
+        n = length(x)
+        
+        if (n == 0) {
+                " "
+        } else if (n == 1) {
+                x
+        } else if (n == 2) {
+                str_c(x[1], "and", x[2], sep = " ")
+        } else {
+                first <- str_c(x[seq_len(n-1)], delim = ",")
+                last <- str_c("and", x[n], sep = " ")
+                combine <- str_c(c(first, last), collapse = " ")
+                combine
+        }
+}
+convertMe(c())
+convertMe(c("a"))
+convertMe(c("a", "b"))
+convertMe(c("a", "b", "c", "d"))
+```
+
+### Exercise 2
+
+1. How would you match the literal string "$^$"?
+```{r}
+str_view(c("$^$", "ab$^$sfas"), "^\\$\\^\\$$", match = TRUE)
+```
+
+2. Given the corpus of common words in stringr::words, create
+regular expressions that find all words that:
+a. Start with “y”.
+b. End with “x”.
+c. Are exactly three letters long. (Don’t cheat by using str_length()!)
+d. Have seven letters or more.
+Since this list is long, you might want to use the match argument to str_view() to show only the matching or nonmatching words.
+```{r}
+# a
+str_view(words, "^y", match = TRUE)
+# b
+str_view(words, "x$", match = TRUE)
+# c
+str_view(words, "^...$", match = TRUE) 
+# d
+str_view(words, "^.......", match = TRUE) 
+str_view(words, ".......", match = TRUE) 
+```
+
+
+### Exercise 3
+1. Create regular expressions to find all words that:
+a. Start with a vowel.
+```{r}
+str_subset(words, "^[aeiou]")
+```
+
+b. Only contain consonants. (Hint: think about matching “not”-vowels.)
+```{r}
+str_subset(words, "[aeiou]", negate = TRUE)
+```
+
+c. End with ed, but not with eed.
+```{r}
+str_subset(words, "[^e]ed$")
+```
+
+d. End with ing or ize.
+```{r}
+str_subset(words, "i(ng|se)$")
+```
+
+
+2. Empirically verify the rule “i before e except after c.”
+```{r}
+length(str_subset(stringr::words, "(cei|[^c]ie)"))
+length(str_subset(stringr::words, "(cie|[^c]ei)"))
+```
+
+3. Is “q” always followed by a “u”?
+```{r}
+str_subset(words, "^qu")
+```
+
+### Exercise 3
+
+1. Describe the equivalents of ?, +, and * in {m,n} form.
+• ?: 0 or 1
+• +: 1 or more
+• *: 0 or more
+
+• {n}: exactly n
+• {n,}: n or more
+• {,m}: at most m
+• {n,m}: between n and m
+
+3. Create regular expressions to find all words that:
+a. Start with three consonants.
+```{r}
+str_subset(words, "^[^aeiou]{3}")
+```
+
+b. Have three or more vowels in a row.
+```{r}
+str_subset(words, "[aeiou]{3,}")
+```
+
+c. Have two or more vowel-consonant pairs in a row.
+```{r}
+str_subset(words, "[aeiou][^aeiuo]{2,3}")
+```
+
+4. Solve the beginner regexp crosswords at https://regexcross word.com/challenges/beginner.
+
+### Exercise 4
+
+1. Describe, in words, what these expressions will match: 
+a. (.)\1\1
+b. "(.)(.)\\2\\1" c. (..)\1
+d. "(.).\\1.\\1"
+e. "(.)(.)(.).*\\3\\2\\1"
+
+**a** (.)\1\1: The same character appearing three times in a row. E.g. "aaa"
+
+**b** "(.)(.)\\2\\1": A pair of characters followed by the same pair of characters in reversed order. E.g. "abba".
+
+**c** (..)\1: Any two characters repeated. E.g. "a1a1".
+
+**d** "(.).\\1.\\1": A character followed by any character, the original character, any other character, the original character again. E.g. "abaca", "b8b.b".
+
+**e** "(.)(.)(.).*\\3\\2\\1" Three characters followed by zero or more characters of any kind followed by the same three characters but in reverse order. E.g. "abcsgasgddsadgsdgcba" or "abccba" or "abc1cba".
+
+2. Construct regular expressions to match words that:
+a. Start and end with the same character.
+```{r}
+str_subset(words, "^(.)((.*\\1$)|\\1?$)")
+```
+
+b. Contain a repeated pair of letters (e.g., “church” contains “ch” repeated twice).
+```{r}
+str_subset(words, "([A-Za-z][A-Za-z]).*\\1")
+```
+
+c. Contain one letter repeated in at least three places (e.g., “eleven” contains three “e”s)
+```{r}
+str_subset(words, "([a-z]).*\\1.*\\1")
+```
+
+### Exercise 5
+
+1. For each of the following challenges, try solving it by using both a single regular expression, and a combination of multiple str_detect() calls:
+
+a. Find all words that start or end with x.
+```{r}
+str_subset(words, "^x|x$")
+```
+
+b. Find all words that start with a vowel and end with a conso‐
+nant.
+```{r}
+start <- str_detect(words, "^[aeiou]")
+end <- str_detect(words, "[^aeiou]$")
+word <- words[start & end] %>% head
+```
+
+c. Are there any words that contain at least one of each different vowel?
+```{r}
+words[str_detect(words, "a") &
+  str_detect(words, "e") &
+  str_detect(words, "i") &
+  str_detect(words, "o") &
+  str_detect(words, "u")]
+```
+
+d. What word has the highest number of vowels? What word has the highest proportion of vowels? (Hint: what is the denominator?)
+```{r}
+df <- tibble(word = words)
+df <- df %>% mutate(Vcount = str_count(words, "[aeiou]"),
+                    prop = Vcount/str_length(words)) %>% arrange(desc(prop))
+df[1,]
+```
+
+### Exercise 6
+
