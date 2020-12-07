@@ -1,0 +1,283 @@
+---
+title: "Data Wrangling"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data Import
+
+## Importing files into a dataframe
+```{r error = TRUE, warning = FALSE}
+read.csv(file = "filename.csv",
+         header = T,
+         row.names = 1,
+         na.strings = ,
+         stringsAsFactors = F)
+```
+
+## Tibbles
+
+```{r, warning = FALSE, message=FALSE}
+library(dplyr)
+tibble("name" = c("me", "you", "I"),
+       "age" = c(22, 23, 24),
+       "gender" = c("m", "f", "m"))
+```
+## Tibble vs. Data Frame
+
+1. tibble() never adjusts the names of variables.
+
+```{r}
+mytibble <- tibble("first name" = c("me", "you", "I"))
+names(mytibble)
+mydata <- data.frame("first name" = c("me", "you", "I"))
+names(mydata)
+```
+
+2. tibble() evaluates arguments lazily and sequentially.
+
+```{r error=TRUE}
+data.frame(x = 1:5, y = x^2)
+tibble(x = 1:5, y = x^2)
+```
+
+3. Tibbles are quite strict about subsetting. [i,j] always
+returns another tibble. Contrast this with a data frame,
+where [i,j] may return a data frame or a vector.
+
+```{r}
+tb <- tibble("name" = c("me", "you", "I"),
+       "age" = c(22, 23, 24),
+       "gender" = c("m", "f", "m"))
+
+df <- data.frame("name" = c("me", "you", "I"),
+       "age" = c(22, 23, 24),
+       "gender" = c("m", "f", "m"))
+
+class(tb[ , 2])
+class(df[ , 2])
+```
+
+2. To extract a column as a vector object, use $. 
+Tibbles are also stricter with $. It doesn’t allow partial naming.
+
+```{r}
+tb <- tibble("name" = c("me", "you", "I"),
+       "age" = c(22, 23, 24),
+       "gender" = c("m", "f", "m"))
+
+tb$age
+class(tb$age)
+tb$a
+
+df <- data.frame("name" = c("me", "you", "I"),
+       "age" = c(22, 23, 24),
+       "gender" = c("m", "f", "m"))
+
+df$age
+class(df$age)
+df$a
+
+```
+
+## Importing files into tibbles
+
+```{r}
+library(readr)
+read_csv(file = "flat file 01.txt")
+read_csv(file = "flat file 02.txt",
+         na = "---",
+         col_names = c("name", "sex", "age"))
+```
+## Parsing Factors
+
+```{r}
+sex = c("M", "F", "M", "F", "M", "M")
+sex_f = parse_factor(sex, levels = c("M", "F"), ordered = F) 
+str(sex_f)
+```
+
+## Parsing numbers with formats
+```{r}
+parse_double("1000")
+parse_double("1,000")
+parse_number("$1,000.00")
+parse_number("The income is $1,000.00")
+parse_number("$98.76")
+```
+## Parsing date/time
+
+parse_datetime()
+```{r}
+parse_datetime("2018-09-28T1310")
+parse_datetime("20180928T1310")
+parse_datetime("09/28/2018")
+```
+
+parse_date()
+
+```{r}
+parse_date("2018/09/28")
+parse_date("2018-09-28")
+```
+
+parse_time()
+
+```{r}
+parse_time("1:00 PM")
+parse_time("13:00")
+```
+
+```{r}
+parse_date("Sep-28-2018", format = "%d - %b - %Y")
+parse_time("1100PM", format = "%I%M%p")
+```
+## Specifying column types in read_csv
+
+```{r}
+read_csv(file = "flat file 07.txt", na = "NDA",
+         col_types = cols(
+                 "Name" = col_character(),
+                 "Sex" = col_factor(levels = c("M", "F"), ordered = F),
+                 "Age" = col_integer(),
+                 "Income" = col_number(),
+                 "DateEntry" = col_date(format = "%m/%d/%Y")
+         ))
+```
+
+## Reading Fixed Width Files
+
+```{r}
+# specify column widths
+read_fwf(file = "flat file 06.txt", col_positions = 
+                 fwf_cols("Name" = 10,
+                          "Sex" = 3,
+                          "Age" = 3,
+                          "Income" = 5), skip = 1)
+
+read_fwf(file = "flat file 06.txt", col_positions = 
+                 fwf_cols("Name" = c(1,10),
+                          "Sex" = c(11,13),
+                          "Age" = c(14,16),
+                          "Income" = c(17,21)), skip = 1)
+```
+## Writing tibbles to a csv file
+
+```{r}
+write_csv(mtcars, "mtcars.csv")
+write_rds(mtcars, "mtcars.rds")
+```
+
+# Tidying Data
+
+**Gather**
+```{r}
+library(tidyr)
+table4a
+
+data <- gather(table4a, "1999", "2000", key = "Year", value = "cases", factor_key = TRUE)
+data
+```
+
+**Spread**
+
+```{r}
+table2
+spread(table2, key = type, value = count)
+```
+
+**Separate**
+
+```{r}
+table3
+separate(table3, col = rate, into = c("case", "population"), convert = TRUE)
+separate(table3, col = rate, into = c("case", "population"), sep = "/", convert = TRUE)
+```
+
+**Unite**
+
+```{r}
+table5
+data <- unite(table5, col = yr, century, year, sep = "")
+separate(data, col = rate, into = c("cases", "population"), sep = "/", convert = TRUE)
+```
+
+**Duplicates in the data**
+
+Use unique() and duplicated(). Also, from dyplyr package we have distinct().
+
+## Transforming Data Using dplyr
+
+**Filter**
+
+```{r}
+library(nycflights13)
+flights
+filter(flights, month == 2, day == 2)
+```
+
+**Arrange**
+
+```{r}
+arrange(flights, month, day, desc(dep_delay))
+
+```
+
+
+**Select**
+
+```{r}
+select(flights, -(year:dep_time))
+select(flights, year)
+select(flights, -c(year, dep_time, day))
+```
+
+**Mutate**
+
+```{r}
+# select columns i.e obtain relevant variables to the analysis
+flight_sub <- select(flights, year:day, dep_delay, arr_delay)
+flight_sub
+
+# total gain with respect to expected travel time 
+mema <- mutate(flight_sub, gain = arr_delay - dep_delay)
+rename(mema, worth = gain)
+transmute(flight_sub, gain = arr_delay - dep_delay)
+```
+
+**Summarize**
+
+```{r}
+flights_grp = group_by(flights, year, month)
+flights_grp
+
+summarize(flights_grp, "Avg. arrival delay" = mean(arr_delay, na.rm = T),
+                        "Avg. departure delay" = mean(dep_delay, na.rm = T))
+
+
+oct <- filter(flights, month == 10)
+oct
+
+oct <- group_by(oct, year)
+oct
+
+summarize(oct, "Avg. arrival delay" = mean(arr_delay, na.rm = T),
+                        "Avg. departure delay" = mean(dep_delay, na.rm = T))
+
+
+# using count()
+
+by_mnth <- group_by(flights, month)
+by_mnth 
+count(by_mnth)
+
+by_yr <- group_by(flights, year)
+by_yr
+count(by_yr) # we only have 1 year
+```
+
+
+
