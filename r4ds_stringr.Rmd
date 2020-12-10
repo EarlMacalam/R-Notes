@@ -330,6 +330,3 @@ swapped <- str_replace_all(words, "^([A-Za-z])(.*)([A-Za-z])$", "\\3\\2\\1")
 intersect(swapped, words)
 ```
 
-
-
-s
