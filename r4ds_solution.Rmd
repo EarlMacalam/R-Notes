@@ -526,4 +526,3 @@ flights %>% group_by(dest) %>%
         arrange(desc(rank))
 
 ```
-
